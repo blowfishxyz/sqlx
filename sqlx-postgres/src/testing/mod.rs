@@ -79,11 +79,15 @@ async fn test_context(args: &TestArgs) -> Result<TestContext<Postgres>, Error> {
 
     let master_opts = PgConnectOptions::from_str(&url).expect("failed to parse DATABASE_URL");
 
+    let max_connections = dotenvy::var("SQLX_MASTER_POOL_MAX_CONNECTIONS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(20);
     let pool = PoolOptions::new()
         // Postgres' normal connection limit is 100 plus 3 superuser connections
         // We don't want to use the whole cap and there may be fuzziness here due to
         // concurrently running tests anyway.
-        .max_connections(20)
+        .max_connections(max_connections)
         // Immediately close master connections. Tokio's I/O streams don't like hopping runtimes.
         .after_release(|_conn, _| Box::pin(async move { Ok(false) }))
         .connect_lazy_with(master_opts);
@@ -161,12 +165,16 @@ async fn test_context(args: &TestArgs) -> Result<TestContext<Postgres>, Error> {
     conn.execute(&format!("create database {new_db_name:?}")[..])
         .await?;
 
+    let test_max_connections = dotenvy::var("SQLX_TEST_POOL_MAX_CONNECTIONS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(5);
     Ok(TestContext {
         pool_opts: PoolOptions::new()
             // Don't allow a single test to take all the connections.
             // Most tests shouldn't require more than 5 connections concurrently,
             // or else they're likely doing too much in one test.
-            .max_connections(5)
+            .max_connections(test_max_connections)
             // Close connections ASAP if left in the idle queue.
             .idle_timeout(Some(Duration::from_secs(1)))
             .parent(master_pool.clone()),
