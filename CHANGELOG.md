@@ -5,6 +5,108 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.2 - 2024-09-02
+
+10 pull requests were merged this release cycle.
+
+This release addresses a few regressions that have occurred, and refines SQLx's MSRV policy (see [the FAQ](FAQ.md)).
+
+### Added
+* [[#3447]]: Clarify usage of Json/Jsonb in query macros [[@Lachstec]]
+
+### Changed
+* [[#3424]]: Remove deprecated feature-names from `Cargo.toml` files in examples [[@carschandler]]
+
+### Fixed
+* [[#3403]]: Fix (#3395) sqlx::test macro in 0.8 [[@joeydewaal]]
+* [[#3411]]: fix: Use rfc3339 to decode date from text [[@pierre-wehbe]]
+* [[#3453]]: fix(#3445): PgHasArrayType [[@joeydewaal]]
+    * Fixes `#[sqlx(no_pg_array)]` being forbidden on `#[derive(Type)]` structs. 
+* [[#3454]]: fix: non snake case warning [[@joeydewaal]]
+* [[#3459]]: Pgsql cube type compile fail [[@kdesjard]]
+* [[#3465]]: fix(postgres): max number of binds is 65535, not 32767 (regression) [[@abonander]]
+* [[#3467]]: fix cancellation issues with `PgListener`, `PgStream::recv()` [[@abonander]]
+    * Fixes cryptic `unknown message: "\\0"` error 
+* [[#3474]]: Fix try_get example in README.md [[@luveti]]
+
+[#3403]: https://github.com/launchbadge/sqlx/pull/3403
+[#3411]: https://github.com/launchbadge/sqlx/pull/3411
+[#3424]: https://github.com/launchbadge/sqlx/pull/3424
+[#3447]: https://github.com/launchbadge/sqlx/pull/3447
+[#3453]: https://github.com/launchbadge/sqlx/pull/3453
+[#3454]: https://github.com/launchbadge/sqlx/pull/3454
+[#3455]: https://github.com/launchbadge/sqlx/pull/3455
+[#3459]: https://github.com/launchbadge/sqlx/pull/3459
+[#3465]: https://github.com/launchbadge/sqlx/pull/3465
+[#3467]: https://github.com/launchbadge/sqlx/pull/3467
+[#3474]: https://github.com/launchbadge/sqlx/pull/3474
+
+## 0.8.1 - 2024-08-23
+
+16 pull requests were merged this release cycle.
+
+This release contains a fix for [RUSTSEC-2024-0363]. 
+
+Postgres users are advised to upgrade ASAP as a possible exploit has been demonstrated:
+<https://github.com/launchbadge/sqlx/issues/3440#issuecomment-2307956901>
+
+MySQL and SQLite do not _appear_ to be exploitable, but upgrading is recommended nonetheless.
+
+### Added
+* [[#3421]]: correct spelling of `MySqlConnectOptions::no_engine_substitution()` [[@kolinfluence]]
+    * Deprecates `MySqlConnectOptions::no_engine_subsitution()` (oops) in favor of the correctly spelled version.
+
+### Changed
+* [[#3376]]: doc: hide `spec_error` module [[@abonander]]
+    * This is a helper module for the macros and was not meant to be exposed.
+    * It is not expected to receive any breaking changes for the 0.8.x release, but is not designed as a public API.
+      Use at your own risk.
+* [[#3382]]: feat: bumped to `libsqlite3-sys=0.30.1` to support sqlite 3.46 [[@CommanderStorm]]
+* [[#3385]]: chore(examples):Migrated the pg-chat example to ratatui [[@CommanderStorm]]
+* [[#3399]]: Upgrade to rustls 0.23 [[@djc]]
+    * RusTLS now has pluggable cryptography providers: `ring` (the existing implementation),
+      and `aws-lc-rs` which has optional FIPS certification.
+    * The existing features activating RusTLS (`runtime-tokio-rustls`, `runtime-async-std-rustls`, `tls-rustls`)
+      enable the `ring` provider of RusTLS to match the existing behavior so this _should not_ be a breaking change. 
+    * Switch to the `tls-rustls-aws-lc-rs` feature to use the `aws-lc-rs` provider.
+      * If using `runtime-tokio-rustls` or `runtime-async-std-rustls`, 
+        this will necessitate switching to the appropriate non-legacy runtime feature: 
+        `runtime-tokio` or `runtime-async-std`
+    * See the RusTLS README for more details: <https://github.com/rustls/rustls?tab=readme-ov-file#cryptography-providers>
+
+### Fixed
+* [[#2786]]: fix(sqlx-cli): do not clean sqlx during prepare [[@cycraig]]
+* [[#3354]]: sqlite: fix inconsistent read-after-write [[@ckampfe]]
+* [[#3371]]: Fix encoding and decoding of MySQL enums in `sqlx::Type` [[@alu]]
+* [[#3374]]: fix: usage of `node12` in `SQLx` action [[@hamirmahal]]
+* [[#3380]]: chore: replace structopt with clap in examples [[@tottoto]]
+* [[#3381]]: Fix CI after Rust 1.80, remove dead feature references [[@abonander]]
+* [[#3384]]: chore(tests): fixed deprecation warnings [[@CommanderStorm]]
+* [[#3386]]: fix(dependencys):bumped cargo_metadata to `v0.18.1` to avoid yanked `v0.14.3` [[@CommanderStorm]]
+* [[#3389]]: fix(cli): typo in error for required DB URL [[@ods]]
+* [[#3417]]: Update version to 0.8 in README [[@soucosmo]]
+* [[#3441]]: fix: audit protocol handling [[@abonander]]
+    * This addresses [RUSTSEC-2024-0363] and includes regression tests for MySQL, Postgres and SQLite.
+
+[#2786]: https://github.com/launchbadge/sqlx/pull/2786
+[#3354]: https://github.com/launchbadge/sqlx/pull/3354
+[#3371]: https://github.com/launchbadge/sqlx/pull/3371
+[#3374]: https://github.com/launchbadge/sqlx/pull/3374
+[#3376]: https://github.com/launchbadge/sqlx/pull/3376
+[#3380]: https://github.com/launchbadge/sqlx/pull/3380
+[#3381]: https://github.com/launchbadge/sqlx/pull/3381
+[#3382]: https://github.com/launchbadge/sqlx/pull/3382
+[#3384]: https://github.com/launchbadge/sqlx/pull/3384
+[#3385]: https://github.com/launchbadge/sqlx/pull/3385
+[#3386]: https://github.com/launchbadge/sqlx/pull/3386
+[#3389]: https://github.com/launchbadge/sqlx/pull/3389
+[#3399]: https://github.com/launchbadge/sqlx/pull/3399
+[#3417]: https://github.com/launchbadge/sqlx/pull/3417
+[#3421]: https://github.com/launchbadge/sqlx/pull/3421
+[#3441]: https://github.com/launchbadge/sqlx/pull/3441
+
+[RUSTSEC-2024-0363]: https://rustsec.org/advisories/RUSTSEC-2024-0363.html
+
 ## 0.8.0 - 2024-07-22
 
 70 pull requests were merged this release cycle.
@@ -2472,3 +2574,13 @@ Fix docs.rs build by enabling a runtime feature in the docs.rs metadata in `Carg
 [@KobusEllis]: https://github.com/KobusEllis
 [@YgorSouza]: https://github.com/YgorSouza
 [@Zarthus]: https://github.com/Zarthus
+[@ckampfe]: https://github.com/ckampfe
+[@tottoto]: https://github.com/tottoto
+[@ods]: https://github.com/ods
+[@soucosmo]: https://github.com/soucosmo
+[@kolinfluence]: https://github.com/kolinfluence
+[@joeydewaal]: https://github.com/joeydewaal
+[@pierre-wehbe]: https://github.com/pierre-wehbe
+[@carschandler]: https://github.com/carschandler
+[@kdesjard]: https://github.com/kdesjard
+[@luveti]: https://github.com/luveti
